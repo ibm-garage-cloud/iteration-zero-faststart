@@ -100,29 +100,6 @@ sed "s/^cluster_type=.*/cluster_type=\"${CLUSTER_TYPE}\"/g" < "${TFVARS}" > "${T
     mv "${TFVARS}.tmp" "${TFVARS}"
 #echo "cluster_type=\"${CLUSTER_TYPE}\"" >> ${TFVARS}
 
-POSTGRES_SERVER_EXISTS=$(grep -E "^postgres_server_exists" "${TFVARS}" | sed -E "s/^postgres_server_exists=\"(.*)\".*/\1/g")
-if [[ -z "${POSTGRES_SERVER_EXISTS}" ]]; then
-    ANSWER="x"
-    while [[ "${ANSWER}" =~ [^ne] ]]; do
-        echo -n "Do you want to create a (n)ew postgres server or configure an (e)xisting postgres server? [N/e] "
-        read -r ANSWER
-
-        if [[ -z "${ANSWER}" ]] || [[ "${ANSWER}" =~ [Nn] ]]; then
-            ANSWER="n"
-        elif [[ "${ANSWER}" =~ [Ee] ]]; then
-            ANSWER="e"
-        fi
-    done
-
-    if [[ "${ANSWER}" == "e" ]]; then
-        POSTGRES_SERVER_EXISTS="true"
-    else
-        POSTGRES_SERVER_EXISTS="false"
-    fi
-
-    echo "postgres_server_exists=\"${POSTGRES_SERVER_EXISTS}\"" >> "${TFVARS}"
-fi
-
 echo -e ""
 echo -e "Terraform is about to run with the following settings:"
 echo -e "  - Resource group \033[1;33m${RESOURCE_GROUP_NAME}\033[0m"
@@ -139,13 +116,7 @@ else
     echo -e "\033[1;31mBefore configuring the environment the following namespaces and their contents will be destroyed: tools, dev, test, staging\033[0m"
 fi
 
-if [[ "crc" ==  "${CLUSTER_MANAGEMENT}" ]]; then
-	STAGES_DIRECTORY="stages-crc"
-elif [[ "ocp4" == "${CLUSTER_TYPE}" ]]; then
-	STAGES_DIRECTORY="stages-ocp4"
-else
-	STAGES_DIRECTORY="stages"
-fi
+STAGES_DIRECTORY="stages"
 
 cp "${SRC_DIR}/${STAGES_DIRECTORY}/variables.tf" "${WORKSPACE_DIR}"
 cp "${SRC_DIR}/${STAGES_DIRECTORY}"/stage*.tf "${WORKSPACE_DIR}"
